@@ -1,4 +1,5 @@
-﻿using CMASTER.POS.Business.Interfaces;
+﻿using CMASTER.POS.Business.Exceptions;
+using CMASTER.POS.Business.Interfaces;
 
 namespace CMASTER.POS.Business
 {
@@ -30,16 +31,19 @@ namespace CMASTER.POS.Business
         /// <exception cref="Exception">Exception will be thrown if total price is higher than the provided cash or if other errors occurs</exception>
         public IEnumerable<ICash> CalculateChange(IEnumerable<ICash> providedCash, decimal totalPrice)
         {
-            //Calculating the total cash that the customer provided
-            decimal ProvidedCash = providedCash.Sum(c => c.Value * c.Quantity);
-
-            if (totalPrice > ProvidedCash)
-                throw new Exception($"The provided cash ${ProvidedCash} is not enough to pay the total purchase price of ${totalPrice}.");
-
             try
             {
+                //Calculating the total cash that the customer provided
+                decimal ProvidedCash = providedCash.Sum(c => c.Value * c.Quantity);
+
+                if (totalPrice > ProvidedCash)
+                    throw new NotEnoughtCashException($"=== The provided cash ${ProvidedCash} is not enough to pay the total purchase price of ${totalPrice}. ===");
+            
                 List<ICash> ChangeCashList = new List<ICash>();
                 decimal Change = ProvidedCash - totalPrice;
+
+                if (Change == 0)
+                    throw new NoChangeException("=== The received bills/coins from the customer was the exact amount. No change will be returned. ===");
 
                 //Cycle to determine minimum number of bills and coins to return to the customer
                 while (Change > 0)
@@ -59,9 +63,9 @@ namespace CMASTER.POS.Business
 
                 return ChangeCashList;
             }
-            catch (Exception ex)
+            catch
             {
-                throw new Exception($"The was a problem when trying to calculate the change. The returned message is: {ex.Message}");
+                throw;
             }
         }
 

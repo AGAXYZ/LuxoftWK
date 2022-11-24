@@ -3,6 +3,7 @@ using Xunit;
 using Microsoft.Extensions.Configuration;
 using FluentAssertions;
 using CMASTER.POS.Business.Interfaces;
+using CMASTER.POS.Business.Exceptions;
 
 namespace CMASTER.POS.Tests
 {
@@ -87,8 +88,31 @@ namespace CMASTER.POS.Tests
             Expected.Should().NotBeEquivalentTo(Actual);
         }
 
+        [Theory]
+        [MemberData(nameof(CashList))]
+        public void Should_Calculate_Change_Several_Inputs(decimal total, IEnumerable<ICash> provided, IEnumerable<ICash> expected)
+        { 
+            var Actual = _purchase.CalculateChange(provided, total);
+
+            expected.Should().BeEquivalentTo(Actual);
+        }
+
         [Fact]
-        public void Should_Not_Return_Change()
+        public void Should_Throw_NotEnoughException()
+        {
+            var ProvidedCash = new List<ICash>
+            {
+                new Cash(20, 1),
+                new Cash(10, 2),
+                new Cash(0.10m, 10),
+                new Cash(0.05m, 20)
+            };
+
+            Assert.Throws<NotEnoughtCashException>(() => _purchase.CalculateChange(ProvidedCash, 100));
+        }
+
+        [Fact]
+        public void Should_Return_NoChangeException()
         {
             var ProvidedCash = new List<ICash>
             {
@@ -100,32 +124,7 @@ namespace CMASTER.POS.Tests
                 new Cash(0.05m, 20)
             };
 
-            var Actual = _purchase.CalculateChange(ProvidedCash, 50);
-
-            Assert.Empty(Actual);
-        }
-
-        [Theory]
-        [MemberData(nameof(CashList))]
-        public void Should_Calculate_Change_Several_Inputs(decimal total, IEnumerable<ICash> provided, IEnumerable<ICash> expected)
-        { 
-            var Actual = _purchase.CalculateChange(provided, total);
-
-            expected.Should().BeEquivalentTo(Actual);
-        }
-
-        [Fact]
-        public void Should_Throw_Exception_Not_Enough()
-        {
-            var ProvidedCash = new List<ICash>
-            {
-                new Cash(20, 1),
-                new Cash(10, 2),
-                new Cash(0.10m, 10),
-                new Cash(0.05m, 20)
-            };
-
-            Assert.Throws<Exception>(() => _purchase.CalculateChange(ProvidedCash, 100));
+            Assert.Throws<NoChangeException>(() => _purchase.CalculateChange(ProvidedCash, 50));
         }
 
         #endregion

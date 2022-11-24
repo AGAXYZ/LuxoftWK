@@ -1,4 +1,5 @@
 ﻿using CMASTER.POS.Business;
+using CMASTER.POS.Business.Exceptions;
 using CMASTER.POS.Business.Interfaces;
 using Microsoft.Extensions.Configuration;
 
@@ -35,22 +36,26 @@ namespace CMASTER.POS.ConsoleApp
                 IPurchase purchase = new Purchase(currencyDenominations);
                 IEnumerable<ICash> change = purchase.CalculateChange(receivedCash, totalPrice);
 
-                //If there is change to be returned to the customer
-                if (change.Count() > 0)
-                {
-                    Console.WriteLine("=== Return to the customer the following bills and/or coins ===");
+                Console.WriteLine("=== Return to the customer the following bills and/or coins ===");
 
-                    foreach (ICash cash in change)
-                        Console.WriteLine($"Value: {cash.Value} - Quantity: {cash.Quantity}");
-                }
-                else
-                {
-                    Console.WriteLine("== The received bills/coins from the customer was the exact amount. No change will be returned.");
-                }
+                foreach (ICash cash in change)
+                    Console.WriteLine($"Value: {cash.Value} - Quantity: {cash.Quantity}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                //Explicitly adding the different exceptions
+                switch (ex)
+                {
+                    case NotEnoughtCashException:
+                        Console.WriteLine(ex.Message);
+                        break;
+                    case NoChangeException:
+                        Console.WriteLine(ex.Message);
+                        break;
+                    default:
+                        Console.WriteLine($"There was a problem during the process. The returned message is: {ex.Message}");
+                        break;
+                }
             }
 
             Console.Read();
