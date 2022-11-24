@@ -14,6 +14,7 @@ namespace CMASTER.POS.ConsoleApp
                 IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).Build();
                 IEnumerable<decimal> currencyDenominations = config["currency"].Split("|").Select(decimal.Parse).OrderByDescending(c => c);
 
+                //Type the required input information
                 Console.WriteLine("Welcome to the CASH Masters Point Of Sale!");
                 Console.Write("Please enter the total price of the items being purchased: ");
                 decimal totalPrice = Convert.ToDecimal(Console.ReadLine());
@@ -22,6 +23,7 @@ namespace CMASTER.POS.ConsoleApp
                 List<Cash> receivedCash = new List<Cash>();
                 int quantity = 0;
 
+                //Add every bill/coin denomination taken from the appsettings.json file
                 foreach (decimal currency in currencyDenominations)
                 {
                     Console.Write($"Value: {currency} - Quantity: ");
@@ -29,9 +31,11 @@ namespace CMASTER.POS.ConsoleApp
                     receivedCash.Add(new Cash(currency, quantity));
                 }
 
+                //Create instance of Purchase class and call the CalculateChange method
                 IPurchase purchase = new Purchase(currencyDenominations);
                 IEnumerable<ICash> change = purchase.CalculateChange(receivedCash, totalPrice);
 
+                //If there is change to be returned to the customer
                 if (change.Count() > 0)
                 {
                     Console.WriteLine("=== Return to the customer the following bills and/or coins ===");
